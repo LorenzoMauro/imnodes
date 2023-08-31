@@ -79,7 +79,8 @@ enum ImNodesStyleFlags_
     ImNodesStyleFlags_NodeOutline = 1 << 0,
     ImNodesStyleFlags_GridLines = 1 << 2,
     ImNodesStyleFlags_GridLinesPrimary = 1 << 3,
-    ImNodesStyleFlags_GridSnapping = 1 << 4
+    ImNodesStyleFlags_GridSnapping = 1 << 4,
+    ImNodesStyleFlags_VerticalLayout = 1 << 5
 };
 
 enum ImNodesPinShape_
@@ -206,7 +207,7 @@ struct ImNodesStyle
     // ImNodesCol value.
     unsigned int Colors[ImNodesCol_COUNT];
 
-    ImNodesStyle();
+	ImNodesStyle();
 };
 
 enum ImNodesMiniMapLocation_

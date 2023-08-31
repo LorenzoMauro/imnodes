@@ -126,7 +126,17 @@ inline CubicBezier GetCubicBezier(
     }
 
     const float  link_length = ImSqrt(ImLengthSqr(end - start));
-    const ImVec2 offset = ImVec2(0.25f * link_length, 0.f);
+
+    ImVec2 offset;
+    if (GImNodes->CurrentAttributeFlags & ImNodesStyleFlags_VerticalLayout)
+    {
+		offset = ImVec2(0.f, -0.1f * link_length);
+    }
+    else
+    {
+		offset = ImVec2(0.25f * link_length, 0.f);
+    }
+
     CubicBezier  cubic_bezier;
     cubic_bezier.P0 = start;
     cubic_bezier.P1 = start + offset;
@@ -543,25 +553,72 @@ void DrawListSortChannelsByDepth(const ImVector<int>& node_idx_depth_order)
     }
 }
 
-// [SECTION] ui state logic
+    // [SECTION] ui state logic
 
-ImVec2 GetScreenSpacePinCoordinates(
-    const ImRect&              node_rect,
-    const ImRect&              attribute_rect,
-    const ImNodesAttributeType type)
+    
+const int& getPinPositionInParent(const ImNodesEditorContext& editor, const ImPinData& pin)
 {
-    IM_ASSERT(type == ImNodesAttributeType_Input || type == ImNodesAttributeType_Output);
-    const float x = type == ImNodesAttributeType_Input
-                        ? (node_rect.Min.x - GImNodes->Style.PinOffset)
-                        : (node_rect.Max.x + GImNodes->Style.PinOffset);
-    return ImVec2(x, 0.5f * (attribute_rect.Min.y + attribute_rect.Max.y));
+    for (const int index : editor.Nodes.Pool[pin.ParentNodeIdx].PinIndices)
+    {
+        if (editor.Pins.Pool[index].Id == pin.Id)
+        {
+            return index;
+        }
+    }
 }
 
+    
+const int& getParentTotalPins(const ImNodesEditorContext& editor, const ImPinData& pin)
+{
+        return editor.Nodes.Pool[pin.ParentNodeIdx].PinIndices.Size;
+}
+
+//ImVec2 GetScreenSpacePinCoordinates(const ImNodesEditorContext& editor, const ImPinData& pin)
+//{
+//    const ImRect& node_rect = editor.Nodes.Pool[pin.ParentNodeIdx].Rect;
+//
+//    IM_ASSERT(pin.Type == ImNodesAttributeType_Input || pin.Type == ImNodesAttributeType_Output);
+//        const float x = pin.Type == ImNodesAttributeType_Input
+//                        ? (node_rect.Min.x - GImNodes->Style.PinOffset)
+//                        : (node_rect.Max.x + GImNodes->Style.PinOffset);
+//    return ImVec2(x, 0.5f * (pin.AttributeRect.Min.y + pin.AttributeRect.Max.y));
+//}
 ImVec2 GetScreenSpacePinCoordinates(const ImNodesEditorContext& editor, const ImPinData& pin)
 {
-    const ImRect& parent_node_rect = editor.Nodes.Pool[pin.ParentNodeIdx].Rect;
-    return GetScreenSpacePinCoordinates(parent_node_rect, pin.AttributeRect, pin.Type);
+	const ImRect& node_rect = editor.Nodes.Pool[pin.ParentNodeIdx].Rect;
+
+	IM_ASSERT(pin.Type == ImNodesAttributeType_Input || pin.Type == ImNodesAttributeType_Output);
+
+	if (GImNodes->CurrentAttributeFlags & ImNodesStyleFlags_VerticalLayout)
+	{
+        const float y = pin.Type == ImNodesAttributeType_Input
+                            ? (node_rect.Max.y + GImNodes->Style.PinOffset)  // Bottom
+                            : (node_rect.Min.y - GImNodes->Style.PinOffset); // Top
+        return ImVec2(0.5f * (pin.AttributeRect.Min.x + pin.AttributeRect.Max.x), y);
+	}
+	const float x = pin.Type == ImNodesAttributeType_Input
+						? (node_rect.Min.x - GImNodes->Style.PinOffset)
+						: (node_rect.Max.x + GImNodes->Style.PinOffset);
+	return ImVec2(x, 0.5f * (pin.AttributeRect.Min.y + pin.AttributeRect.Max.y));
 }
+
+//ImVec2 GetScreenSpacePinCoordinates(
+//    const ImRect&              node_rect,
+//    const ImRect&              attribute_rect,
+//    const ImNodesAttributeType type)
+//{
+//    IM_ASSERT(type == ImNodesAttributeType_Input || type == ImNodesAttributeType_Output);
+//    const float x = type == ImNodesAttributeType_Input
+//                        ? (node_rect.Min.x - GImNodes->Style.PinOffset)
+//                        : (node_rect.Max.x + GImNodes->Style.PinOffset);
+//    return ImVec2(x, 0.5f * (attribute_rect.Min.y + attribute_rect.Max.y));
+//}
+
+//ImVec2 GetScreenSpacePinCoordinates(const ImNodesEditorContext& editor, const ImPinData& pin)
+//{
+//    const ImRect& parent_node_rect = editor.Nodes.Pool[pin.ParentNodeIdx].Rect;
+//    return GetScreenSpacePinCoordinates(parent_node_rect, pin.AttributeRect, pin.Type);
+//}
 
 bool MouseInCanvas()
 {
@@ -791,10 +848,13 @@ void BoxSelectorUpdateSelection(ImNodesEditorContext& editor, ImRect box_rect)
             const ImRect&    node_start_rect = editor.Nodes.Pool[pin_start.ParentNodeIdx].Rect;
             const ImRect&    node_end_rect = editor.Nodes.Pool[pin_end.ParentNodeIdx].Rect;
 
-            const ImVec2 start = GetScreenSpacePinCoordinates(
-                node_start_rect, pin_start.AttributeRect, pin_start.Type);
+            //const ImVec2 start = GetScreenSpacePinCoordinates(node_start_rect, pin_start.AttributeRect, pin_start.Type);
+            //const ImVec2 end =GetScreenSpacePinCoordinates(node_end_rect, pin_end.AttributeRect, pin_end.Type);
+
+            const ImVec2 start =
+                GetScreenSpacePinCoordinates(editor, pin_start);
             const ImVec2 end =
-                GetScreenSpacePinCoordinates(node_end_rect, pin_end.AttributeRect, pin_end.Type);
+                GetScreenSpacePinCoordinates(editor, pin_end);
 
             // Test
             if (RectangleOverlapsLink(box_rect, start, end, pin_start.Type))
@@ -1482,7 +1542,7 @@ void DrawPin(ImNodesEditorContext& editor, const int pin_idx)
     ImPinData&    pin = editor.Pins.Pool[pin_idx];
     const ImRect& parent_node_rect = editor.Nodes.Pool[pin.ParentNodeIdx].Rect;
 
-    pin.Pos = GetScreenSpacePinCoordinates(parent_node_rect, pin.AttributeRect, pin.Type);
+    pin.Pos = GetScreenSpacePinCoordinates(editor, pin);
 
     ImU32 pin_color = pin.ColorStyle.Background;
 
@@ -1995,7 +2055,8 @@ ImNodesStyle::ImNodesStyle()
       LinkThickness(3.f), LinkLineSegmentsPerLength(0.1f), LinkHoverDistance(10.f),
       PinCircleRadius(4.f), PinQuadSideLength(7.f), PinTriangleSideLength(9.5),
       PinLineThickness(1.f), PinHoverRadius(10.f), PinOffset(0.f), MiniMapPadding(8.0f, 8.0f),
-      MiniMapOffset(4.0f, 4.0f), Flags(ImNodesStyleFlags_NodeOutline | ImNodesStyleFlags_GridLines),
+      MiniMapOffset(4.0f, 4.0f),
+      Flags(ImNodesStyleFlags_NodeOutline | ImNodesStyleFlags_GridLines),
       Colors()
 {
 }
