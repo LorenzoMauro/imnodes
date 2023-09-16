@@ -80,7 +80,8 @@ enum ImNodesStyleFlags_
     ImNodesStyleFlags_GridLines = 1 << 2,
     ImNodesStyleFlags_GridLinesPrimary = 1 << 3,
     ImNodesStyleFlags_GridSnapping = 1 << 4,
-    ImNodesStyleFlags_VerticalLayout = 1 << 5
+    ImNodesStyleFlags_VerticalLayout = 1 << 5,
+	ImNodesStyleFlags_DrawCirclesGrid = 1 << 6
 };
 
 enum ImNodesPinShape_
@@ -167,7 +168,7 @@ struct ImNodesIO
 struct ImNodesStyle
 {
     float GridSpacing;
-
+    float  GridDotSize;
     float  NodeCornerRounding;
     ImVec2 NodePadding;
     float  NodeBorderThickness;

@@ -1385,31 +1385,79 @@ inline ImRect GetNodeTitleRect(const ImNodeData& node)
             ImVec2(0.f, expanded_title_rect.GetHeight()));
 }
 
+//void DrawGrid(ImNodesEditorContext& editor, const ImVec2& canvas_size)
+//{
+//    const ImVec2 offset = editor.Panning;
+//    ImU32        line_color = GImNodes->Style.Colors[ImNodesCol_GridLine];
+//    ImU32        line_color_prim = GImNodes->Style.Colors[ImNodesCol_GridLinePrimary];
+//    bool         draw_primary = GImNodes->Style.Flags & ImNodesStyleFlags_GridLinesPrimary;
+//
+//    for (float x = fmodf(offset.x, GImNodes->Style.GridSpacing); x < canvas_size.x;
+//         x += GImNodes->Style.GridSpacing)
+//    {
+//        GImNodes->CanvasDrawList->AddLine(
+//            EditorSpaceToScreenSpace(ImVec2(x, 0.0f)),
+//            EditorSpaceToScreenSpace(ImVec2(x, canvas_size.y)),
+//            offset.x - x == 0.f && draw_primary ? line_color_prim : line_color);
+//    }
+//
+//    for (float y = fmodf(offset.y, GImNodes->Style.GridSpacing); y < canvas_size.y;
+//         y += GImNodes->Style.GridSpacing)
+//    {
+//        GImNodes->CanvasDrawList->AddLine(
+//            EditorSpaceToScreenSpace(ImVec2(0.0f, y)),
+//            EditorSpaceToScreenSpace(ImVec2(canvas_size.x, y)),
+//            offset.y - y == 0.f && draw_primary ? line_color_prim : line_color);
+//    }
+//}
+
 void DrawGrid(ImNodesEditorContext& editor, const ImVec2& canvas_size)
 {
     const ImVec2 offset = editor.Panning;
-    ImU32        line_color = GImNodes->Style.Colors[ImNodesCol_GridLine];
-    ImU32        line_color_prim = GImNodes->Style.Colors[ImNodesCol_GridLinePrimary];
+    ImU32        color = GImNodes->Style.Colors[ImNodesCol_GridLine];
+    ImU32        color_prim = GImNodes->Style.Colors[ImNodesCol_GridLinePrimary];
     bool         draw_primary = GImNodes->Style.Flags & ImNodesStyleFlags_GridLinesPrimary;
+    bool         draw_circles = GImNodes->Style.Flags & ImNodesStyleFlags_DrawCirclesGrid;
+    float        dot_radius = GImNodes->Style.GridDotSize;
 
     for (float x = fmodf(offset.x, GImNodes->Style.GridSpacing); x < canvas_size.x;
          x += GImNodes->Style.GridSpacing)
     {
-        GImNodes->CanvasDrawList->AddLine(
-            EditorSpaceToScreenSpace(ImVec2(x, 0.0f)),
-            EditorSpaceToScreenSpace(ImVec2(x, canvas_size.y)),
-            offset.x - x == 0.f && draw_primary ? line_color_prim : line_color);
-    }
+        for (float y = fmodf(offset.y, GImNodes->Style.GridSpacing); y < canvas_size.y;
+             y += GImNodes->Style.GridSpacing)
+        {
+            ImU32 currentColor =
+                (offset.x - x == 0.f || offset.y - y == 0.f) && draw_primary ? color_prim : color;
 
-    for (float y = fmodf(offset.y, GImNodes->Style.GridSpacing); y < canvas_size.y;
-         y += GImNodes->Style.GridSpacing)
-    {
-        GImNodes->CanvasDrawList->AddLine(
-            EditorSpaceToScreenSpace(ImVec2(0.0f, y)),
-            EditorSpaceToScreenSpace(ImVec2(canvas_size.x, y)),
-            offset.y - y == 0.f && draw_primary ? line_color_prim : line_color);
+            if (draw_circles)
+            {
+                GImNodes->CanvasDrawList->AddCircleFilled(
+                    EditorSpaceToScreenSpace(ImVec2(x, y)), dot_radius, currentColor);
+            }
+            else
+            {
+                // Horizontal lines
+                if (y == fmodf(offset.y, GImNodes->Style.GridSpacing))
+                {
+                    GImNodes->CanvasDrawList->AddLine(
+                        EditorSpaceToScreenSpace(ImVec2(x, 0.0f)),
+                        EditorSpaceToScreenSpace(ImVec2(x, canvas_size.y)),
+                        currentColor);
+                }
+
+                // Vertical lines
+                if (x == fmodf(offset.x, GImNodes->Style.GridSpacing))
+                {
+                    GImNodes->CanvasDrawList->AddLine(
+                        EditorSpaceToScreenSpace(ImVec2(0.0f, y)),
+                        EditorSpaceToScreenSpace(ImVec2(canvas_size.x, y)),
+                        currentColor);
+                }
+            }
+        }
     }
 }
+
 
 struct QuadOffsets
 {
@@ -2051,7 +2099,7 @@ ImNodesIO::ImNodesIO()
 }
 
 ImNodesStyle::ImNodesStyle()
-    : GridSpacing(24.f), NodeCornerRounding(4.f), NodePadding(8.f, 8.f), NodeBorderThickness(1.f),
+    : GridSpacing(24.f), GridDotSize(1.0f), NodeCornerRounding(4.f), NodePadding(8.f, 8.f), NodeBorderThickness(1.f),
       LinkThickness(3.f), LinkLineSegmentsPerLength(0.1f), LinkHoverDistance(10.f),
       PinCircleRadius(4.f), PinQuadSideLength(7.f), PinTriangleSideLength(9.5),
       PinLineThickness(1.f), PinHoverRadius(10.f), PinOffset(0.f), MiniMapPadding(8.0f, 8.0f),
