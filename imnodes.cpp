@@ -128,13 +128,14 @@ inline CubicBezier GetCubicBezier(
     const float  link_length = ImSqrt(ImLengthSqr(end - start));
 
     ImVec2 offset;
+    const float& deviationFactor = GImNodes->Style.BezierDeviationFactor;
     if (GImNodes->CurrentAttributeFlags & ImNodesStyleFlags_VerticalLayout)
     {
-		offset = ImVec2(0.f, -0.1f * link_length);
+        offset = ImVec2(0.f, -deviationFactor * link_length);
     }
     else
     {
-		offset = ImVec2(0.25f * link_length, 0.f);
+        offset = ImVec2(deviationFactor * link_length, 0.f);
     }
 
     CubicBezier  cubic_bezier;
@@ -2100,7 +2101,7 @@ ImNodesIO::ImNodesIO()
 
 ImNodesStyle::ImNodesStyle()
     : GridSpacing(24.f), GridDotSize(1.0f), NodeCornerRounding(4.f), NodePadding(8.f, 8.f), NodeBorderThickness(1.f),
-      LinkThickness(3.f), LinkLineSegmentsPerLength(0.1f), LinkHoverDistance(10.f),
+      LinkThickness(3.f), LinkLineSegmentsPerLength(0.1f), LinkHoverDistance(10.f), BezierDeviationFactor(0.2f),
       PinCircleRadius(4.f), PinQuadSideLength(7.f), PinTriangleSideLength(9.5),
       PinLineThickness(1.f), PinHoverRadius(10.f), PinOffset(0.f), MiniMapPadding(8.0f, 8.0f),
       MiniMapOffset(4.0f, 4.0f),
@@ -2769,6 +2770,8 @@ static const ImNodesStyleVarInfo GStyleVarInfo[] = {
     {ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImNodesStyle, LinkLineSegmentsPerLength)},
     // ImNodesStyleVar_LinkHoverDistance
     {ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImNodesStyle, LinkHoverDistance)},
+    // ImNodesStyleVar_BezierDeviationFactor
+    {ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImNodesStyle, BezierDeviationFactor)},
     // ImNodesStyleVar_PinCircleRadius
     {ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImNodesStyle, PinCircleRadius)},
     // ImNodesStyleVar_PinQuadSideLength
